@@ -4,6 +4,12 @@ from nltk.corpus import PlaintextCorpusReader
 import pandas as pd
 import dataframe_image as dfi
 
+def max_likelihood(s: pd.Series):
+    '''
+    Maximum Likelihood Estimation: P(c2|c1)= count(c1,c2)/count(c1)
+    '''
+    return s/s.sum()
+
 def highlight_max_both_axes(s: pd.DataFrame):
     '''
     Assign a background colour showing rowwise and columnwise maxes.
@@ -14,9 +20,9 @@ def highlight_max_both_axes(s: pd.DataFrame):
     for i, n in enumerate(nilai):
         for j, v in enumerate(varu):
             if s[v][n] == rmax[n] and s[v][n] == cmax[v]:
-                color = "blue"
+                color = "teal"
             elif s[v][n] == rmax[n]:
-                color = "red"
+                color = "pink"
             elif s[v][n] == cmax[v] and s[v][n] > 0:
                 color = "yellow"
             else:
@@ -68,4 +74,17 @@ for c1, v in cfd.items():
 
 css = highlight_max_both_axes(frame)
 
-dfi.export(frame.style.set_properties(**{'border': '1.3px solid black', 'color': 'black'}).apply(get_css), "pathittrupathu.png")
+dfi.export(frame.style.set_properties(**{'border': '1.3px solid black', 'color': 'black', 'padding': '5px'}).apply(get_css), "pathittrupathu.png")
+
+pd.set_option("styler.format.precision", 3)
+row_mle = frame.apply(max_likelihood, axis = 1)
+css = highlight_max_both_axes(row_mle)
+row_mle.fillna('-', inplace=True)
+
+dfi.export(row_mle.style.set_properties(**{'border': '1.3px solid black', 'color': 'black', 'padding': '5px'}).apply(get_css), "pathittrupathu_row_mle.png")
+
+col_mle = frame.apply(max_likelihood, axis = 0)
+css = highlight_max_both_axes(col_mle)
+col_mle.fillna('-', inplace=True)
+
+dfi.export(col_mle.style.set_properties(**{'border': '1.3px solid black', 'color': 'black', 'padding': '5px'}).apply(get_css), "pathittrupathu_col_mle.png")
