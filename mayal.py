@@ -4,87 +4,99 @@ from nltk.corpus import PlaintextCorpusReader
 import pandas as pd
 import dataframe_image as dfi
 
-def max_likelihood(s: pd.Series):
-    '''
-    Maximum Likelihood Estimation: P(c2|c1)= count(c1,c2)/count(c1)
-    '''
-    return s/s.sum()
-
-def highlight_max_both_axes(s: pd.DataFrame):
-    '''
-    Assign a background colour showing rowwise and columnwise maxes.
-    '''
-    ret = pd.DataFrame(0, index=nilai, columns=varu)
-    rmax = s.max(axis=1)
-    cmax = s.max()
-    for i, n in enumerate(nilai):
-        for j, v in enumerate(varu):
-            if s[v][n] == rmax[n] and s[v][n] == cmax[v]:
-                color = "teal"
-            elif s[v][n] == rmax[n]:
-                color = "pink"
-            elif s[v][n] == cmax[v] and s[v][n] > 0:
-                color = "yellow"
-            else:
-                color = "white"
-            ret.iloc[i, j] = "background-color: %s" % color
-    return ret
-
-def get_css(s: pd.Series):
-    '''
-    pick css value for a series
-    '''
-    ret = [css.loc[i, s.name] for i in s.index]
-    return ret
-
 root = ".\\corpora\\"
 files = PlaintextCorpusReader(root, ".*")
+
 #raw = files.raw("pathittrupathu.txt")
-sents = []
+
 # punct = {'.', '[', "'", ']', ',', ')', '\ufeff', ':', '-', '!', ';', '*', '='}
 punct = re.compile("[\'\]\-\:\[\,!\.\=\*\);]")
 dropper = re.compile("[\d\(]")
-with open(root + "pathittrupathu.txt", encoding="utf8") as input:
-    for sent in input.readlines():
-        sent = re.sub(dropper, "", sent)
-        sent = re.sub("\s+", " ", re.sub(punct, " ", sent)).replace("஡஢", "ரி")
-        if sent.count(" ") > 2: # at least two cheers
-            sents.append(sent)
-
 pulli = '\u0BCD'
 con = ['க','ங','ச','ஞ','ட', 'ண','ற','ன','த','ந','ப','ம','ய','ர','வ','ல', 'ள','ழ']
 cons = ['க்', 'ங்', 'ச்' , 'ஞ்', 'ட்', 'ண்', 'த்', 'ந்', 'ப்', 'ம்', 'ய்', 'ர்', 'வ்', 'ல்', 'ள்', 'ழ்', 'ற்','ன்']
 
-cfd = nltk.ConditionalFreqDist((con1, con2)
-for con1 in con
-for con2 in con
-for sent in sents
-for word in sent.split()
-if con1 + pulli + con2 in word)
+class MayalProcessor:
+    def max_likelihood(self, s: pd.Series):
+        '''
+        Maximum Likelihood Estimation: P(c2|c1)= count(c1,c2)/count(c1)
+        '''
+        return s/s.sum()
 
-nilai = cfd.keys()
-varu = cfd.keys()
+    def highlight_max_both_axes(self, s: pd.DataFrame):
+        '''
+        Assign a background colour showing rowwise and columnwise maxes.
+        '''
+        ret = pd.DataFrame(0, index=self.nilai, columns=self.varu)
+        rmax = s.max(axis=1)
+        cmax = s.max()
+        for i, n in enumerate(self.nilai):
+            for j, v in enumerate(self.varu):
+                if s[v][n] == rmax[n] and s[v][n] == cmax[v]:
+                    color = "teal"
+                elif s[v][n] == rmax[n]:
+                    color = "pink"
+                elif s[v][n] == cmax[v] and s[v][n] > 0:
+                    color = "yellow"
+                else:
+                    color = "white"
+                ret.iloc[i, j] = "background-color: %s" % color
+        return ret
 
-frame = pd.DataFrame(0, index=nilai, columns=varu)
+    def process(self, work):
+        def get_css(s: pd.Series):
+            '''
+            pick css value for a series
+            '''
+            ret = [css.loc[i, s.name] for i in s.index]
+            return ret
 
-for c1, v in cfd.items():
-    for c2 in v.keys():
-        frame[c2][c1] = v[c2]
+        sents = []
+        text = root + work + ".txt"
+        with open(text, encoding="utf8") as input:
+            for sent in input.readlines():
+                sent = re.sub(dropper, "", sent)
+                sent = re.sub("\s+", " ", re.sub(punct, " ", sent)).replace("஡஢", "ரி")
+                if sent.count(" ") > 2: # at least two cheers
+                    sents.append(sent)
 
 
-css = highlight_max_both_axes(frame)
+        cfd = nltk.ConditionalFreqDist((con1, con2)
+        for con1 in con
+        for con2 in con
+        for sent in sents
+        for word in sent.split()
+        if con1 + pulli + con2 in word)
 
-dfi.export(frame.style.set_properties(**{'border': '1.3px solid black', 'color': 'black', 'padding': '5px'}).apply(get_css), "pathittrupathu.png")
+        self.nilai = cfd.keys()
+        self.varu = cfd.keys()
 
-pd.set_option("styler.format.precision", 3)
-row_mle = frame.apply(max_likelihood, axis = 1)
-css = highlight_max_both_axes(row_mle)
-row_mle.fillna('-', inplace=True)
+        frame = pd.DataFrame(0, index=self.nilai, columns=self.varu)
 
-dfi.export(row_mle.style.set_properties(**{'border': '1.3px solid black', 'color': 'black', 'padding': '5px'}).apply(get_css), "pathittrupathu_row_mle.png")
+        for c1, v in cfd.items():
+            for c2 in v.keys():
+                frame[c2][c1] = v[c2]
 
-col_mle = frame.apply(max_likelihood, axis = 0)
-css = highlight_max_both_axes(col_mle)
-col_mle.fillna('-', inplace=True)
 
-dfi.export(col_mle.style.set_properties(**{'border': '1.3px solid black', 'color': 'black', 'padding': '5px'}).apply(get_css), "pathittrupathu_col_mle.png")
+        css = self.highlight_max_both_axes(frame)
+
+        dfi.export(frame.style.set_properties(**{'border': '1.3px solid black', 'color': 'black', 'padding': '5px'}).apply(get_css), "out\\" + work + ".png")
+
+        pd.set_option("styler.format.precision", 3)
+        row_mle = frame.apply(self.max_likelihood, axis = 1)
+        css = self.highlight_max_both_axes(row_mle)
+        row_mle.fillna('-', inplace=True)
+
+        dfi.export(row_mle.style.set_properties(**{'border': '1.3px solid black', 'color': 'black', 'padding': '5px'}).apply(get_css), "out\\" + work + "_row_mle.png")
+
+        col_mle = frame.apply(self.max_likelihood, axis = 0)
+        css = self.highlight_max_both_axes(col_mle)
+        col_mle.fillna('-', inplace=True)
+
+        dfi.export(col_mle.style.set_properties(**{'border': '1.3px solid black', 'color': 'black', 'padding': '5px'}).apply(get_css), "out\\" + work + "_col_mle.png")
+
+p = MayalProcessor()
+works = ["ainkurunuru", "akananuru", "kalithokai", "kurunthokai", "natrinai", "paripadal", "pathittrupathu", "purananuru", "combined"]
+works = ["combined"]
+for work in works:
+    p.process(work)
