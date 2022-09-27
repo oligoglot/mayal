@@ -97,6 +97,5 @@ class MayalProcessor:
 
 p = MayalProcessor()
 works = ["ainkurunuru", "akananuru", "kalithokai", "kurunthokai", "natrinai", "paripadal", "pathittrupathu", "purananuru", "combined"]
-works = ["combined"]
 for work in works:
     p.process(work)
