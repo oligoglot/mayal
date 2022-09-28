@@ -13,8 +13,9 @@ files = PlaintextCorpusReader(root, ".*")
 punct = re.compile("[\'\]\-\:\[\,!\.\=\*\);]")
 dropper = re.compile("[\d\(]")
 pulli = '\u0BCD'
-con = ['க','ங','ச','ஞ','ட', 'ண','ற','ன','த','ந','ப','ம','ய','ர','வ','ல', 'ள','ழ']
-cons = ['க்', 'ங்', 'ச்' , 'ஞ்', 'ட்', 'ண்', 'த்', 'ந்', 'ப்', 'ம்', 'ய்', 'ர்', 'வ்', 'ல்', 'ள்', 'ழ்', 'ற்','ன்']
+con = ['க', 'ங', 'ச', 'ஞ', 'ட', 'ண', 'ற', 'ன', 'த', 'ந', 'ப', 'ம', 'ய', 'வ', 'ர', 'ல', 'ள', 'ழ']
+cons = ['க்', 'ங்', 'ச்' , 'ஞ்', 'ட்', 'ண்', 'ற்', 'ன்', 'த்', 'ந்', 'ப்', 'ம்', 'ய்', 'வ்', 'ர்', 'ல்', 'ள்', 'ழ்']
+iast = {'க' : 'k', 'ங': 'ṅ', 'ச': 'c', 'ஞ': 'ñ', 'ட': 'ṭ', 'ண': 'ṇ', 'ற': 'ṟ', 'ன': 'ṉ', 'த': 't', 'ந': 'n', 'ப': 'p', 'ம': 'm', 'ய': 'y', 'வ': 'v', 'ர': 'r', 'ல': 'l', 'ள': 'l̤', 'ழ': 'ḻ'}
 
 class MayalProcessor:
     def max_likelihood(self, s: pd.Series):
@@ -51,6 +52,7 @@ class MayalProcessor:
             ret = [css.loc[i, s.name] for i in s.index]
             return ret
 
+        print("Processing " + work)
         sents = []
         text = root + work + ".txt"
         with open(text, encoding="utf8") as input:
@@ -61,7 +63,7 @@ class MayalProcessor:
                     sents.append(sent)
 
 
-        cfd = nltk.ConditionalFreqDist((con1, con2)
+        cfd = nltk.ConditionalFreqDist((iast[con1], iast[con2])
         for con1 in con
         for con2 in con
         for sent in sents
