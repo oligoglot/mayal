@@ -98,6 +98,6 @@ class MayalProcessor:
         dfi.export(col_mle.style.set_properties(**{'border': '1.3px solid black', 'color': 'black', 'padding': '5px'}).apply(get_css), "out\\" + work + "_col_mle.png")
 
 p = MayalProcessor()
-works = ["ainkurunuru", "akananuru", "kalithokai", "kurunthokai", "natrinai", "paripadal", "pathittrupathu", "purananuru", "combined"]
+works = ["ainkurunuru", "akananuru", "kalithokai", "kurunthokai", "natrinai", "paripadal", "pathittrupathu", "purananuru", "ettuthokai-consolidated"]
 for work in works:
     p.process(work)
