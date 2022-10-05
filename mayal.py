@@ -82,20 +82,20 @@ class MayalProcessor:
 
         css = self.highlight_max_both_axes(frame)
 
-        dfi.export(frame.style.set_properties(**{'border': '1.3px solid black', 'color': 'black', 'padding': '5px'}).apply(get_css), "out\\" + work + ".png")
+        dfi.export(frame.style.set_properties(**{'border': '1.3px solid black', 'color': 'black', 'padding': '5px'}).apply(get_css), "out\\" + work + ".png", dpi=300)
 
         pd.set_option("styler.format.precision", 3)
         row_mle = frame.apply(self.max_likelihood, axis = 1)
         css = self.highlight_max_both_axes(row_mle)
         row_mle.fillna('-', inplace=True)
 
-        dfi.export(row_mle.style.set_properties(**{'border': '1.3px solid black', 'color': 'black', 'padding': '5px'}).apply(get_css), "out\\" + work + "_row_mle.png")
+        dfi.export(row_mle.style.set_properties(**{'border': '1.3px solid black', 'color': 'black', 'padding': '5px'}).apply(get_css), "out\\" + work + "_row_mle.png", dpi=300)
 
         col_mle = frame.apply(self.max_likelihood, axis = 0)
         css = self.highlight_max_both_axes(col_mle)
         col_mle.fillna('-', inplace=True)
 
-        dfi.export(col_mle.style.set_properties(**{'border': '1.3px solid black', 'color': 'black', 'padding': '5px'}).apply(get_css), "out\\" + work + "_col_mle.png")
+        dfi.export(col_mle.style.set_properties(**{'border': '1.3px solid black', 'color': 'black', 'padding': '5px'}).apply(get_css), "out\\" + work + "_col_mle.png", dpi=300)
 
 p = MayalProcessor()
 works = ["ainkurunuru", "akananuru", "kalithokai", "kurunthokai", "natrinai", "paripadal", "pathittrupathu", "purananuru", "ettuthokai-consolidated"]
