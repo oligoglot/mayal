@@ -54,22 +54,8 @@ class MayalProcessor:
             return ret
 
         print("Processing " + work)
-        sents = []
-        text = root + work + ".txt"
-        with open(text, encoding="utf8") as input:
-            for sent in input.readlines():
-                sent = re.sub(dropper, "", sent)
-                sent = re.sub("\s+", " ", re.sub(punct, " ", sent)).replace("஡஢", "ரி")
-                if sent.count(" ") > 2: # at least two cheers
-                    sents.append(sent)
-
-
-        cfd = nltk.ConditionalFreqDist((iso[con1], iso[con2])
-        for sent in sents
-        for word in sent.split()
-        for con1 in con
-        for con2 in con
-        if con1 + pulli + con2 in word)
+        sents = self.preprocess_work(work)
+        cfd = nltk.ConditionalFreqDist(self.compute_cfd(sents))
 
         self.nilai = iso_cons
         self.varu = iso_cons
@@ -97,6 +83,27 @@ class MayalProcessor:
         col_mle.fillna('-', inplace=True)
 
         dfi.export(col_mle.style.set_properties(**{'border': '1.3px solid black', 'color': 'black', 'padding': '5px'}).apply(get_css), "out\\" + work + "_col_mle.png", dpi=300)
+
+    def preprocess_work(self, work):
+        sents = []
+        text = root + work + ".txt"
+        with open(text, encoding="utf8") as input:
+            for sent in input.readlines():
+                sent = re.sub(dropper, "", sent)
+                sent = re.sub("\s+", " ", re.sub(punct, " ", sent)).replace("஡஢", "ரி")
+                if sent.count(" ") > 2: # at least two cheers
+                    sents.append(sent)
+        return sents
+
+    def compute_cfd(self, sents):
+        ret = []  
+        for sent in sents:
+            for word in sent.split():
+                for con1 in con:
+                    for con2 in con:
+                        if con1 + pulli + con2 in word:
+                            ret.append((iso[con1], iso[con2]))
+        return ret
 
 p = MayalProcessor()
 works = ["ainkurunuru", "akananuru", "kalithokai", "kurunthokai", "natrinai", "paripadal", "pathittrupathu", "purananuru", "ettuthokai-consolidated"]
