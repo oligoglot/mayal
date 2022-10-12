@@ -15,7 +15,8 @@ dropper = re.compile("[\d\(]")
 pulli = '\u0BCD'
 con = ['க', 'ங', 'ச', 'ஞ', 'ட', 'ண', 'ற', 'ன', 'த', 'ந', 'ப', 'ம', 'ய', 'வ', 'ர', 'ல', 'ள', 'ழ']
 cons = ['க்', 'ங்', 'ச்' , 'ஞ்', 'ட்', 'ண்', 'ற்', 'ன்', 'த்', 'ந்', 'ப்', 'ம்', 'ய்', 'வ்', 'ர்', 'ல்', 'ள்', 'ழ்']
-iast = {'க' : 'k', 'ங': 'ṅ', 'ச': 'c', 'ஞ': 'ñ', 'ட': 'ṭ', 'ண': 'ṇ', 'ற': 'ṟ', 'ன': 'ṉ', 'த': 't', 'ந': 'n', 'ப': 'p', 'ம': 'm', 'ய': 'y', 'வ': 'v', 'ர': 'r', 'ல': 'l', 'ள': 'l̤', 'ழ': 'ḻ'}
+iast = {'க' : 'k', 'ங': 'ṅ', 'ச': 'c', 'ஞ': 'ñ', 'ட': 'ṭ', 'ண': 'ṇ', 'ற': 'ṟ', 'ன': 'ṉ', 'த': 't', 'ந': 'n', 'ப': 'p', 'ம': 'm', 'ய': 'y', 'வ': 'v', 'ர': 'r', 'ல': 'l', 'ள': 'ḷ', 'ழ': 'ḻ'}
+iast_cons = ['k', 'ṅ', 'c' , 'ñ', 'ṭ', 'ṇ', 'ṟ', 'ṉ', 't', 'n', 'p', 'm', 'y', 'v', 'r', 'l', 'ḷ', 'ḻ']
 
 class MayalProcessor:
     def max_likelihood(self, s: pd.Series):
@@ -64,16 +65,17 @@ class MayalProcessor:
 
 
         cfd = nltk.ConditionalFreqDist((iast[con1], iast[con2])
-        for con1 in con
-        for con2 in con
         for sent in sents
         for word in sent.split()
+        for con1 in con
+        for con2 in con
         if con1 + pulli + con2 in word)
 
-        self.nilai = cfd.keys()
-        self.varu = cfd.keys()
+        self.nilai = iast_cons
+        self.varu = iast_cons
 
         frame = pd.DataFrame(0, index=self.nilai, columns=self.varu)
+        #frame.reindex(index=con, columns=con)
 
         for c1, v in cfd.items():
             for c2 in v.keys():
