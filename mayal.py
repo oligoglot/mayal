@@ -1,8 +1,10 @@
+from typing import Counter
 import nltk
 import re
 from nltk.corpus import PlaintextCorpusReader
 import pandas as pd
 import dataframe_image as dfi
+from matplotlib import pyplot as plt
 
 root = ".\\corpora\\"
 files = PlaintextCorpusReader(root, ".*")
@@ -17,6 +19,8 @@ con = ['க', 'ங', 'ச', 'ஞ', 'ட', 'ண', 'ற', 'ன', 'த', 'ந', '�
 cons = ['க்', 'ங்', 'ச்' , 'ஞ்', 'ட்', 'ண்', 'ற்', 'ன்', 'த்', 'ந்', 'ப்', 'ம்', 'ய்', 'வ்', 'ர்', 'ல்', 'ள்', 'ழ்']
 iso = {'க' : 'k', 'ங': 'ṅ', 'ச': 'c', 'ஞ': 'ñ', 'ட': 'ṭ', 'ண': 'ṇ', 'ற': 'ṟ', 'ன': 'ṉ', 'த': 't', 'ந': 'n', 'ப': 'p', 'ம': 'm', 'ய': 'y', 'வ': 'v', 'ர': 'r', 'ல': 'l', 'ள': 'ḷ', 'ழ': 'ḻ'}
 iso_cons = ['k', 'ṅ', 'c' , 'ñ', 'ṭ', 'ṇ', 'ṟ', 'ṉ', 't', 'n', 'p', 'm', 'y', 'v', 'r', 'l', 'ḷ', 'ḻ']
+plosives = set(['k', 'c' , 'ṭ', 'ṟ', 'p', 't'])
+nasals = set(['ṅ', 'ñ', 'ṇ', 'ṉ', 'n', 'm'])
 
 class MayalProcessor:
     def max_likelihood(self, s: pd.Series):
@@ -55,7 +59,25 @@ class MayalProcessor:
 
         print("Processing " + work)
         sents = self.preprocess_work(work)
-        cfd = nltk.ConditionalFreqDist(self.compute_cfd(sents))
+        freqs = self.compute_cfd(sents)
+        counts = Counter()
+        for c1, c2 in freqs:
+            n, v = 'A', 'A'
+            if c1 in plosives:
+                n = 'P'
+            elif c1 in nasals:
+                n = 'N'
+            if c2 in plosives:
+                v = 'P'
+            elif c2 in nasals:
+                v = 'N'
+            counts[n + v] += 1
+        counts = dict(counts.most_common(6))
+        fig = plt.figure(figsize =(5, 5))
+        plt.pie(counts.values(), labels = counts.keys(), autopct='%1.0f%%')
+        fig.savefig("out\\" + work + "-pie.png", dpi=300, bbox_inches='tight')
+
+        cfd = nltk.ConditionalFreqDist(freqs)
 
         self.nilai = iso_cons
         self.varu = iso_cons
@@ -65,7 +87,6 @@ class MayalProcessor:
         for c1, v in cfd.items():
             for c2 in v.keys():
                 frame[c2][c1] = v[c2]
-
 
         css = self.highlight_max_both_axes(frame)
 
