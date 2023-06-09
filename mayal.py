@@ -5,11 +5,10 @@ from nltk.corpus import PlaintextCorpusReader
 import pandas as pd
 import dataframe_image as dfi
 from matplotlib import pyplot as plt
+from matplotlib import pyplot as plt
 
-root = ".\\corpora\\"
+root = ".\\corpora\\ettuthokai\\"
 files = PlaintextCorpusReader(root, ".*")
-
-#raw = files.raw("pathittrupathu.txt")
 
 # punct = {'.', '[', "'", ']', ',', ')', '\ufeff', ':', '-', '!', ';', '*', '='}
 punct = re.compile("[\'\]\-\:\[\,!\.\=\*\);]")
@@ -59,7 +58,7 @@ class MayalProcessor:
 
         print("Processing " + work)
         sents = self.preprocess_work(work)
-        freqs = self.compute_cfd(sents)
+        freqs = self.compute_cfd(''.join(sents))
         counts = Counter()
         for c1, c2 in freqs:
             n, v = 'A', 'A'
@@ -116,17 +115,16 @@ class MayalProcessor:
                     sents.append(sent)
         return sents
 
-    def compute_cfd(self, sents):
-        ret = []  
-        for sent in sents:
-            for word in sent.split():
-                for con1 in con:
-                    for con2 in con:
-                        if con1 + pulli + con2 in word:
-                            ret.append((iso[con1], iso[con2]))
+    def compute_cfd(self, text):
+        ret = []
+        text = text.replace(' ', '').replace('\n', '')
+        for pos in range(len(text) - 2):
+            if text[pos] in con and text[pos+1] == pulli and text[pos+2] in con:
+                ret.append((iso[text[pos]], iso[text[pos+2]]))
         return ret
 
 p = MayalProcessor()
 works = ["ainkurunuru", "akananuru", "kalithokai", "kurunthokai", "natrinai", "paripadal", "pathittrupathu", "purananuru", "ettuthokai-consolidated"]
+#works = ["thirumurukaatruppadai"]
 for work in works:
     p.process(work)
