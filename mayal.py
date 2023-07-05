@@ -7,8 +7,7 @@ import dataframe_image as dfi
 from matplotlib import pyplot as plt
 from matplotlib import pyplot as plt
 
-root = ".\\corpora\\ettuthokai\\"
-files = PlaintextCorpusReader(root, ".*")
+root = ".\\corpora\\"
 
 # punct = {'.', '[', "'", ']', ',', ')', '\ufeff', ':', '-', '!', ';', '*', '='}
 punct = re.compile("[\'\]\-\:\[\,!\.\=\*\);]")
@@ -48,7 +47,7 @@ class MayalProcessor:
                 ret.iloc[i, j] = "background-color: %s" % color
         return ret
 
-    def process(self, work):
+    def process(self, mode, collection, work):
         def get_css(s: pd.Series):
             '''
             pick css value for a series
@@ -56,8 +55,8 @@ class MayalProcessor:
             ret = [css.loc[i, s.name] for i in s.index]
             return ret
 
-        print("Processing " + work)
-        sents = self.preprocess_work(work)
+        print("Processing", mode, collection, work)
+        sents = self.preprocess_work(mode, collection, work)
         freqs = self.compute_cfd(''.join(sents))
         counts = Counter()
         for c1, c2 in freqs:
@@ -89,24 +88,25 @@ class MayalProcessor:
 
         css = self.highlight_max_both_axes(frame)
 
-        dfi.export(frame.style.set_properties(**{'border': '1.3px solid black', 'color': 'black', 'padding': '5px'}).apply(get_css), "out\\" + work + ".png", dpi=300)
+        filepathprefix = "out\\" + mode + "\\" + collection + "\\" + work
+        dfi.export(frame.style.set_properties(**{'border': '1.3px solid black', 'color': 'black', 'padding': '5px'}).apply(get_css), filepathprefix + ".png", dpi=300)
 
         pd.set_option("styler.format.precision", 3)
         row_mle = frame.apply(self.max_likelihood, axis = 1)
         css = self.highlight_max_both_axes(row_mle)
         row_mle.fillna('-', inplace=True)
 
-        dfi.export(row_mle.style.set_properties(**{'border': '1.3px solid black', 'color': 'black', 'padding': '5px'}).apply(get_css), "out\\" + work + "_row_mle.png", dpi=300)
+        dfi.export(row_mle.style.set_properties(**{'border': '1.3px solid black', 'color': 'black', 'padding': '5px'}).apply(get_css), filepathprefix + "_row_mle.png", dpi=300)
 
         col_mle = frame.apply(self.max_likelihood, axis = 0)
         css = self.highlight_max_both_axes(col_mle)
         col_mle.fillna('-', inplace=True)
 
-        dfi.export(col_mle.style.set_properties(**{'border': '1.3px solid black', 'color': 'black', 'padding': '5px'}).apply(get_css), "out\\" + work + "_col_mle.png", dpi=300)
+        dfi.export(col_mle.style.set_properties(**{'border': '1.3px solid black', 'color': 'black', 'padding': '5px'}).apply(get_css), filepathprefix + "_col_mle.png", dpi=300)
 
-    def preprocess_work(self, work):
+    def preprocess_work(self, mode, collection, work):
         sents = []
-        text = root + work + ".txt"
+        text = root + mode + "\\" + collection + "\\" + work + ".txt"
         with open(text, encoding="utf8") as input:
             for sent in input.readlines():
                 sent = re.sub(dropper, "", sent)
@@ -124,7 +124,12 @@ class MayalProcessor:
         return ret
 
 p = MayalProcessor()
-works = ["ainkurunuru", "akananuru", "kalithokai", "kurunthokai", "natrinai", "paripadal", "pathittrupathu", "purananuru", "ettuthokai-consolidated"]
-#works = ["thirumurukaatruppadai"]
+
+
+collection = "பத்துப்பாட்டு"
+# works = ["ainkurunuru", "akananuru", "kalithokai", "kurunthokai", "natrinai", "paripadal", "pathittrupathu", "purananuru", "ettuthokai-consolidated"]
+works = ["நெடுநல்வாடை"]
+modes = ["சொற்பிரிப்பு", "யாப்பு"]
 for work in works:
-    p.process(work)
+    for mode in modes:
+        p.process(mode, collection, work)
