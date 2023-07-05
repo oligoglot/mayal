@@ -1,7 +1,6 @@
 from typing import Counter
 import nltk
 import re
-from nltk.corpus import PlaintextCorpusReader
 import pandas as pd
 import dataframe_image as dfi
 from matplotlib import pyplot as plt
@@ -47,34 +46,28 @@ class MayalProcessor:
                 ret.iloc[i, j] = "background-color: %s" % color
         return ret
 
-    def process(self, mode, collection, work):
+    def process(self, imode, collection, work):
+        print("Processing", imode, collection, work)
+        sents = self.preprocess_work(imode, collection, work)
+        for to_merge in [True, False]:
+            freqs = self.compute_cfd(''.join(sents), to_merge)
+            counts = self.phonetype_counts(freqs)   
+            filepathprefix = "out\\" + imode + "_" + collection + "_" + work
+            if to_merge:
+                filepathprefix = filepathprefix + "_merged"
+            self.output(filepathprefix, freqs, counts)
+
+    def output(self, filepathprefix, freqs, counts):
+        self.plot_pie(filepathprefix, counts)
+        self.tabulate(filepathprefix, freqs)
+
+    def tabulate(self, filepathprefix, freqs):
         def get_css(s: pd.Series):
             '''
             pick css value for a series
             '''
             ret = [css.loc[i, s.name] for i in s.index]
             return ret
-
-        print("Processing", mode, collection, work)
-        sents = self.preprocess_work(mode, collection, work)
-        freqs = self.compute_cfd(''.join(sents))
-        counts = Counter()
-        for c1, c2 in freqs:
-            n, v = 'A', 'A'
-            if c1 in plosives:
-                n = 'P'
-            elif c1 in nasals:
-                n = 'N'
-            if c2 in plosives:
-                v = 'P'
-            elif c2 in nasals:
-                v = 'N'
-            counts[n + v] += 1
-        counts = dict(counts.most_common(6))
-        fig = plt.figure(figsize =(5, 5))
-        plt.pie(counts.values(), labels = counts.keys(), autopct='%1.0f%%')
-        fig.savefig("out\\" + work + "-pie.png", dpi=300, bbox_inches='tight')
-
         cfd = nltk.ConditionalFreqDist(freqs)
 
         self.nilai = iso_cons
@@ -87,8 +80,6 @@ class MayalProcessor:
                 frame[c2][c1] = v[c2]
 
         css = self.highlight_max_both_axes(frame)
-
-        filepathprefix = "out\\" + mode + "\\" + collection + "\\" + work
         dfi.export(frame.style.set_properties(**{'border': '1.3px solid black', 'color': 'black', 'padding': '5px'}).apply(get_css), filepathprefix + ".png", dpi=300)
 
         pd.set_option("styler.format.precision", 3)
@@ -104,9 +95,30 @@ class MayalProcessor:
 
         dfi.export(col_mle.style.set_properties(**{'border': '1.3px solid black', 'color': 'black', 'padding': '5px'}).apply(get_css), filepathprefix + "_col_mle.png", dpi=300)
 
-    def preprocess_work(self, mode, collection, work):
+    def plot_pie(self, filepathprefix, counts):
+        fig = plt.figure(figsize =(5, 5))
+        plt.pie(counts.values(), labels = counts.keys(), autopct='%1.0f%%')
+        fig.savefig(filepathprefix + "-pie.png", dpi=300, bbox_inches='tight')
+
+    def phonetype_counts(self, freqs):
+        counts = Counter()
+        for c1, c2 in freqs:
+            n, v = 'A', 'A'
+            if c1 in plosives:
+                n = 'P'
+            elif c1 in nasals:
+                n = 'N'
+            if c2 in plosives:
+                v = 'P'
+            elif c2 in nasals:
+                v = 'N'
+            counts[n + v] += 1
+        counts = dict(counts.most_common(6))
+        return counts
+
+    def preprocess_work(self, imode, collection, work):
         sents = []
-        text = root + mode + "\\" + collection + "\\" + work + ".txt"
+        text = root + imode + "\\" + collection + "\\" + work + ".txt"
         with open(text, encoding="utf8") as input:
             for sent in input.readlines():
                 sent = re.sub(dropper, "", sent)
@@ -115,9 +127,12 @@ class MayalProcessor:
                     sents.append(sent)
         return sents
 
-    def compute_cfd(self, text):
+    def compute_cfd(self, text, to_merge = True):
         ret = []
-        text = text.replace(' ', '').replace('\n', '')
+        if to_merge:
+            text = text.replace(' ', '').replace('\n', '')
+        else:
+            text = text.replace('\n', ' ')
         for pos in range(len(text) - 2):
             if text[pos] in con and text[pos+1] == pulli and text[pos+2] in con:
                 ret.append((iso[text[pos]], iso[text[pos+2]]))
@@ -129,7 +144,7 @@ p = MayalProcessor()
 collection = "பத்துப்பாட்டு"
 # works = ["ainkurunuru", "akananuru", "kalithokai", "kurunthokai", "natrinai", "paripadal", "pathittrupathu", "purananuru", "ettuthokai-consolidated"]
 works = ["நெடுநல்வாடை"]
-modes = ["சொற்பிரிப்பு", "யாப்பு"]
+imodes = ["சொற்பிரிப்பு", "யாப்பு"]
 for work in works:
-    for mode in modes:
-        p.process(mode, collection, work)
+    for imode in imodes:
+        p.process(imode, collection, work)
