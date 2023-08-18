@@ -1,12 +1,14 @@
 from typing import Counter
 import nltk
 import re
+from nltk.corpus import PlaintextCorpusReader
 import pandas as pd
 import dataframe_image as dfi
 from matplotlib import pyplot as plt
 from matplotlib import pyplot as plt
 
-root = ".\\corpora\\"
+root = ".\\corpora\\pathupaattu\\"
+files = PlaintextCorpusReader(root, ".*")
 
 # punct = {'.', '[', "'", ']', ',', ')', '\ufeff', ':', '-', '!', ';', '*', '='}
 punct = re.compile("[\'\]\-\:\[\,!\.\=\*\);]")
@@ -46,61 +48,17 @@ class MayalProcessor:
                 ret.iloc[i, j] = "background-color: %s" % color
         return ret
 
-    def process(self, imode, collection, work):
-        print("Processing", imode, collection, work)
-        sents = self.preprocess_work(imode, collection, work)
-        for to_merge in [False]:
-            freqs = self.compute_cfd(''.join(sents), to_merge)
-            counts = self.phonetype_counts(freqs)   
-            filepathprefix = "out\\" + imode + "_" + collection + "_" + work
-            if to_merge:
-                filepathprefix = filepathprefix + "_merged"
-            self.output(filepathprefix, freqs, counts)
-
-    def output(self, filepathprefix, freqs, counts):
-        self.plot_pie(filepathprefix, counts)
-        self.tabulate(filepathprefix, freqs)
-
-    def tabulate(self, filepathprefix, freqs):
+    def process(self, work):
         def get_css(s: pd.Series):
             '''
             pick css value for a series
             '''
             ret = [css.loc[i, s.name] for i in s.index]
             return ret
-        cfd = nltk.ConditionalFreqDist(freqs)
 
-        self.nilai = iso_cons
-        self.varu = iso_cons
-
-        frame = pd.DataFrame(0, index=self.nilai, columns=self.varu)
-
-        for c1, v in cfd.items():
-            for c2 in v.keys():
-                frame[c2][c1] = v[c2]
-
-        css = self.highlight_max_both_axes(frame)
-        dfi.export(frame.style.set_properties(**{'border': '1.3px solid black', 'color': 'black', 'padding': '5px'}).apply(get_css), filepathprefix + ".png", dpi=300)
-
-        pd.set_option("styler.format.precision", 3)
-        row_mle = frame.apply(self.max_likelihood, axis = 1)
-        css = self.highlight_max_both_axes(row_mle)
-        row_mle.fillna('-', inplace=True)
-
-        dfi.export(row_mle.style.set_properties(**{'border': '1.3px solid black', 'color': 'black', 'padding': '5px'}).apply(get_css), filepathprefix + "_row_mle.png", dpi=300)
-
-        col_mle = frame.apply(self.max_likelihood, axis = 0)
-        css = self.highlight_max_both_axes(col_mle)
-        col_mle.fillna('-', inplace=True)
-
-        dfi.export(col_mle.style.set_properties(**{'border': '1.3px solid black', 'color': 'black', 'padding': '5px'}).apply(get_css), filepathprefix + "_col_mle.png", dpi=300)
-
-    def plot_pie(self, filepathprefix, counts):
-        fig = plt.figure(figsize =(5, 5))
-        plt.pie(counts.values(), labels = counts.keys(), autopct='%1.0f%%')
-        fig.savefig(filepathprefix + "-pie.png", dpi=300, bbox_inches='tight')
-
-    def phonetype_counts(self, freqs):
+        print("Processing " + work)
+        sents = self.preprocess_work(work)
+        freqs = self.compute_cfd(sents)
         counts = Counter()
         for c1, c2 in freqs:
             n, v = 'A', 'A'
@@ -114,11 +72,41 @@ class MayalProcessor:
                 v = 'N'
             counts[n + v] += 1
         counts = dict(counts.most_common(6))
-        return counts
+        fig = plt.figure(figsize =(5, 5))
+        plt.pie(counts.values(), labels = counts.keys(), autopct='%1.0f%%')
+        fig.savefig("out\\" + work + "-pie.png", dpi=300, bbox_inches='tight')
 
-    def preprocess_work(self, imode, collection, work):
+        cfd = nltk.ConditionalFreqDist(freqs)
+
+        self.nilai = iso_cons
+        self.varu = iso_cons
+
+        frame = pd.DataFrame(0, index=self.nilai, columns=self.varu)
+
+        for c1, v in cfd.items():
+            for c2 in v.keys():
+                frame[c2][c1] = v[c2]
+
+        css = self.highlight_max_both_axes(frame)
+
+        dfi.export(frame.style.set_properties(**{'border': '1.3px solid black', 'color': 'black', 'padding': '5px'}).apply(get_css), "out\\" + work + ".png", dpi=300)
+
+        pd.set_option("styler.format.precision", 3)
+        row_mle = frame.apply(self.max_likelihood, axis = 1)
+        css = self.highlight_max_both_axes(row_mle)
+        row_mle.fillna('-', inplace=True)
+
+        dfi.export(row_mle.style.set_properties(**{'border': '1.3px solid black', 'color': 'black', 'padding': '5px'}).apply(get_css), "out\\" + work + "_row_mle.png", dpi=300)
+
+        col_mle = frame.apply(self.max_likelihood, axis = 0)
+        css = self.highlight_max_both_axes(col_mle)
+        col_mle.fillna('-', inplace=True)
+
+        dfi.export(col_mle.style.set_properties(**{'border': '1.3px solid black', 'color': 'black', 'padding': '5px'}).apply(get_css), "out\\" + work + "_col_mle.png", dpi=300)
+
+    def preprocess_work(self, work):
         sents = []
-        text = root + imode + "\\" + collection + "\\" + work + ".txt"
+        text = root + work + ".txt"
         with open(text, encoding="utf8") as input:
             for sent in input.readlines():
                 sent = re.sub(dropper, "", sent)
@@ -127,24 +115,18 @@ class MayalProcessor:
                     sents.append(sent)
         return sents
 
-    def compute_cfd(self, text, to_merge = True):
+    def compute_cfd(self, sents):
         ret = []
-        if to_merge:
-            text = text.replace(' ', '').replace('\n', '')
-        else:
-            text = text.replace('\n', ' ')
-        for pos in range(len(text) - 2):
-            if text[pos] in con and text[pos+1] == pulli and text[pos+2] in con:
-                ret.append((iso[text[pos]], iso[text[pos+2]]))
+        for sent in sents:
+            for word in sent.split():
+                for con1 in con:
+                    for con2 in con:
+                        if con1 + pulli + con2 in word:
+                            ret.append((iso[con1], iso[con2]))
         return ret
 
 p = MayalProcessor()
-
-
-collection = "பத்துப்பாட்டு"
-# works = ["ainkurunuru", "akananuru", "kalithokai", "kurunthokai", "natrinai", "paripadal", "pathittrupathu", "purananuru", "ettuthokai-consolidated"]
-works = ["திருமுருகாற்றுப்படை", "பொருநராற்றுப்படை", "சிறுபாணாற்றுப்படை", "பெரும்பாணாற்றுப்படை", "முல்லைப்பாட்டு", "மதுரைக்காஞ்சி", "நெடுநல்வாடை", "குறிஞ்சிப்பாட்டு", "பட்டினப்பாலை", "மலைபடுகடாம்"]
-imodes = ["சொற்பிரிப்பு"]
+works = ["ainkurunuru", "akananuru", "kalithokai", "kurunthokai", "natrinai", "paripadal", "pathittrupathu", "purananuru", "ettuthokai-consolidated"]
+works = ["thirumurukaatruppadai"]
 for work in works:
-    for imode in imodes:
-        p.process(imode, collection, work)
+    p.process(work)
