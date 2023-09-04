@@ -126,7 +126,7 @@ class MayalProcessor:
         return ret
 
 p = MayalProcessor()
-works = ["ainkurunuru", "akananuru", "kalithokai", "kurunthokai", "natrinai", "paripadal", "pathittrupathu", "purananuru", "ettuthokai-consolidated"]
+works = ["ainkurunuru", "akananuru", "kalithokai", "kurunthokai", "natrinai", "paripadal", "pathittrupathu", "purananuru", "எட்டுத்தொகை-consolidated"]
 works = ["thirumurukaatruppadai"]
 for work in works:
     p.process(work)

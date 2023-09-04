@@ -7,7 +7,7 @@ import dataframe_image as dfi
 root = ".\\corpora\\"
 files = PlaintextCorpusReader(root, ".*")
 
-#raw = files.raw("pathittrupathu.txt")
+#raw = files.raw("பதிற்றுப்பத்து.txt")
 
 # punct = {'.', '[', "'", ']', ',', ')', '\ufeff', ':', '-', '!', ';', '*', '='}
 punct = re.compile("[\'\]\-\:\[\,!\.\=\*\);]")
@@ -111,6 +111,6 @@ class MayalProcessor:
         return ret
 
 p = MayalProcessor()
-works = ["ainkurunuru", "akananuru", "kalithokai", "kurunthokai", "natrinai", "paripadal", "pathittrupathu", "purananuru", "ettuthokai-consolidated"]
+works = ["ainkurunuru", "akananuru", "kalithokai", "kurunthokai", "natrinai", "paripadal", "pathittrupathu", "purananuru", "எட்டுத்தொகை-consolidated"]
 for work in works:
     p.process(work)
