@@ -95,6 +95,7 @@ class MayalProcessor:
             for c2 in v.keys():
                 frame[c2][c1] = v[c2]
 
+        frame.to_csv(filepathprefix + ".csv")
         css = self.highlight_max_both_axes(frame)
         dfi.export(
             frame.style.set_properties(**{'border': '1.3px solid black', 'color': 'black', 'padding': '5px'}).apply(
