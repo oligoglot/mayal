@@ -67,7 +67,7 @@ class MayalProcessor:
                     text_type = "Type3"
             freqs = self.compute_cfd(''.join(sents), to_merge)
             counts = self.phonetype_counts(freqs)
-            filepathprefix = "out/" + text_type + "/" + collection + "/" + imode + "_" + "_" + work
+            filepathprefix = "out/" + text_type + "/" + collection + "/" + imode + "_" + work
             if to_merge:
                 filepathprefix = filepathprefix + "_merged"
             self.output(filepathprefix, freqs, counts)
@@ -76,13 +76,14 @@ class MayalProcessor:
         self.plot_pie(filepathprefix, counts)
         self.tabulate(filepathprefix, freqs)
 
+    def get_css(self, s: pd.Series):
+        '''
+        pick css value for a series
+        '''
+        ret = [self.colours.loc[i, s.name] for i in s.index]
+        return ret
+
     def tabulate(self, filepathprefix, freqs):
-        def get_css(s: pd.Series):
-            '''
-            pick css value for a series
-            '''
-            ret = [css.loc[i, s.name] for i in s.index]
-            return ret
 
         cfd = nltk.ConditionalFreqDist(freqs)
 
@@ -96,27 +97,27 @@ class MayalProcessor:
                 frame[c2][c1] = v[c2]
 
         frame.to_csv(filepathprefix + ".csv")
-        css = self.highlight_max_both_axes(frame)
+        self.colours = self.highlight_max_both_axes(frame)
         dfi.export(
             frame.style.set_properties(**{'border': '1.3px solid black', 'color': 'black', 'padding': '5px'}).apply(
-                get_css), filepathprefix + ".png", dpi=300)
+                self.get_css), filepathprefix + ".png", dpi=300)
 
         pd.set_option("styler.format.precision", 3)
         row_mle = frame.apply(self.max_likelihood, axis=1)
-        css = self.highlight_max_both_axes(row_mle)
+        self.colours = self.highlight_max_both_axes(row_mle)
         row_mle.fillna('-', inplace=True)
 
         dfi.export(
             row_mle.style.set_properties(**{'border': '1.3px solid black', 'color': 'black', 'padding': '5px'}).apply(
-                get_css), filepathprefix + "_row_mle.png", dpi=300)
+                self.get_css), filepathprefix + "_row_mle.png", dpi=300)
 
         col_mle = frame.apply(self.max_likelihood, axis=0)
-        css = self.highlight_max_both_axes(col_mle)
+        self.colours = self.highlight_max_both_axes(col_mle)
         col_mle.fillna('-', inplace=True)
 
         dfi.export(
             col_mle.style.set_properties(**{'border': '1.3px solid black', 'color': 'black', 'padding': '5px'}).apply(
-                get_css), filepathprefix + "_col_mle.png", dpi=300)
+                self.get_css), filepathprefix + "_col_mle.png", dpi=300)
 
     def plot_pie(self, filepathprefix, counts):
         fig = plt.figure(figsize=(5, 5))
@@ -161,6 +162,27 @@ class MayalProcessor:
                 ret.append((iso[text[pos]], iso[text[pos + 2]]))
         return ret
 
+    def mean_frame(self, left: pd.DataFrame, right: pd.DataFrame):
+        '''
+        Mean of under and over estimations
+        '''
+        ret = pd.DataFrame(0, index=self.nilai, columns=self.varu)
+        for i, n in enumerate(self.nilai):
+            for j, v in enumerate(self.varu):
+                ret.iloc[i, j] = round((left[v][i] + right[v][i])/2.0)
+        return ret
+    def compute_mean(self, collection, work):
+        filepathprefix = "out/" + 'Type2' + "/" + collection + "/யாப்பு" + "_" + work + "_merged.csv"
+        type2 = pd.read_csv(filepathprefix)
+        filepathprefix = "out/" + 'Type3' + "/" + collection + "/சொற்பிரிப்பு" + "_" + work + ".csv"
+        type3 = pd.read_csv(filepathprefix)
+        frame = self.mean_frame(type2, type3)
+        filepathprefix = "out/" + 'Mean' + "/" + collection + "/" + work
+        frame.to_csv(filepathprefix + ".csv")
+        self.colours = self.highlight_max_both_axes(frame)
+        dfi.export(
+            frame.style.set_properties(**{'border': '1.3px solid black', 'color': 'black', 'padding': '5px'}).apply(
+                self.get_css), filepathprefix + ".png", dpi=300)
 
 p = MayalProcessor()
 
@@ -176,3 +198,6 @@ for collection in collections:
     for work in works[collection]:
         for imode in imodes:
             p.process(imode, collection, work)
+        p.compute_mean(collection, work)
+
+#%%
