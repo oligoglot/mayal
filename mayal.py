@@ -38,14 +38,22 @@ class MayalProcessor:
         for i, n in enumerate(self.nilai):
             for j, v in enumerate(self.varu):
                 if s[v][n] == rmax[n] and s[v][n] == cmax[v]:
-                    color = "teal"
+                    bgcolor = "black"
+                    fgcolor = "white"
+                    border = "black"
                 elif s[v][n] == rmax[n]:
-                    color = "pink"
+                    bgcolor = "#DCDCDC"
+                    fgcolor = "black"
+                    border = "white"
                 elif s[v][n] == cmax[v] and s[v][n] > 0:
-                    color = "yellow"
+                    bgcolor = "#5A5A5A"
+                    fgcolor = "black"
+                    border = "black"
                 else:
-                    color = "white"
-                ret.iloc[i, j] = "background-color: %s" % color
+                    bgcolor = "white"
+                    fgcolor = "black"
+                    border = "black"
+                ret.iloc[i, j] = "background-color: %s; color: %s; border-color: %s" % (bgcolor, fgcolor, border)
         return ret
 
     def process(self, imode, collection, work):
